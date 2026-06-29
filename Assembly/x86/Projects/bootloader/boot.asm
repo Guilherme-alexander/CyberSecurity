@@ -28,32 +28,36 @@
 CODE_OFFSET equ 0x8         ; Offsets para o descritor de código
 DATA_OFFSET equ 0x10        ; Offsets para o descritor de dados
 
+KERNEL_LOAD_SEG equ 0x1000
+KERNEL_START_ADDR equ 0x100000
+
 ; ================================================================
 ; PONTO DE ENTRADA DO BOOTLOADER
 ; ================================================================
 start:
-    ; Desabilita as interrupções enquanto configuramos os
-    ; registradores de segmento. Isso evita que uma interrupção
-    ; ocorra no meio da configuração e cause problemas
-    cli                     ; Clear Interrupts (Limpa/Desabilita Interrupções)
-
-    ; Configura os registradores de segmento para apontar para
-    ; o segmento 0x0000. Como o ORG é 0x7C00, o endereço físico
-    ; será: (segmento * 16) + offset = (0x0000 * 16) + 0x7C00 = 0x7C00
     mov ax, 0x00            ; Move 0x0000 para o registrador AX
     mov ds, ax              ; DS (Data Segment) - aponta para dados
-    mov es, ax              ; ES (Extra Segment) - aponta para dados extras
-    mov ss, ax              ; SS (Stack Segment) - aponta para a pilha
-
-    ; Configura o ponteiro de pilha (SP - Stack Pointer) para o
-    ; endereço 0x7C00. Como a pilha cresce para baixo (endereços
-    ; decrescentes), ela ficará entre 0x7C00 e 0x0000, não
-    ; conflitando com nosso código que está em 0x7C00 para cima
+    mov es, ax              ;ES (Extra Segment) - aponta para dados
+    mov ss, ax              ; SS (Stack Segment) - aponta para a 
     mov sp, 0x7c00
 
     ; Reativa as interrupções depois que toda a configuração
     ; inicial foi concluída com segurança
     sti                     ; Enable Interrupts (Habilita Interrupções)
+
+    ; LOAD KERNEL
+    mov bx, KERNEL_LOAD_SEG
+    mov dh, 0x00
+    mov dl, 0x80
+    mov cl, 0x02
+    mov ch, 0x00
+    mov ah, 0x02
+    mov al, 8
+    int 0x13
+
+    jc disk_read_error
+
+
 
 ; ================================================================
 ; TRANSIÇÃO PARA O MODO PROTEGIDO (PROTECTED MODE - 32 BITS)
@@ -82,6 +86,9 @@ load_PM:
     ; a CPU ainda está executando instruções em modo real no pipeline
     ; O salto força a CPU a recarregar o pipeline com instruções de 32 bits
     jmp CODE_OFFSET:PModeMain
+
+disk_read_error:
+	hlt
 
 ; ================================================================
 ; DADOS DO PROGRAMA
@@ -209,7 +216,8 @@ PModeMain:
     ; Loop infinito - trava a execução aqui
     ; $ = posição atual (endereço desta instrução)
     ; jmp $ = salta para si mesmo, causando um loop infinito
-    jmp $                   ; Fica preso neste loop para sempre
+    jmp CODE_OFFSET:KERNEL_START_ADDR   ; Fica preso neste loop para sempre
+    
 
 ; ================================================================
 ; PREENCHIMENTO DO SETOR DE BOOT

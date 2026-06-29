@@ -13,3 +13,12 @@ Assembly x86 de 16 bits (modo real).
 - Usar diretivas `[BITS 32]` e depois `[BITS 64]`
 - Usar registradores de 64 bits como `rax`, `rsi`, `rsp`
 - Configurar paginação e tabelas de descritores
+
+```bash
+# BUILD
+$ make all
+nasm -f bin ./src/boot.asm -o ./bin/boot.bin
+
+# RUN
+$ qemu-system-x86_64 -hda ./boot.bin
+```

@@ -1,4 +1,5 @@
 /*
+BLOG: https://linuxhint.com/socket-programming-cpp
 
 [BUILD MinGW g++]
 g++ -o client client_linux.cpp

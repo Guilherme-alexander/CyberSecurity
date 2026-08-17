@@ -1,4 +1,6 @@
 /*
+BLOG: https://linuxhint.com/socket-programming-cpp
+
 [BUILD MinGW g++]
 g++ -o server server_linux.cpp
 

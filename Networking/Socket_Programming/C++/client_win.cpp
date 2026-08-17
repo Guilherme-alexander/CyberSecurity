@@ -1,3 +1,14 @@
+/* 
+
+[BUILD MinGW g++]
+g++ -o client.exe client_win.cpp -lws2_32
+
+[Use]
+>client.exe
+Server response: Server's message --> send messagem
+
+*/ 
+
 #include <iostream>
 #include <cstring>
 #include <winsock2.h>

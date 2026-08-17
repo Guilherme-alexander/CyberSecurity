@@ -1,9 +1,9 @@
 /*
 [BUILD MinGW g++]
-g++ -o server_linux.exe server_linux.cpp -lws2_32
+g++ -o server server_linux.cpp
 
 [Use]
->server.exe
+./server
 Server listening on port 8080...
 Client's message is: Client is sending greetings! --> [connect message to client]
 

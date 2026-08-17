@@ -1,3 +1,14 @@
+/* 
+
+[BUILD MinGW g++]
+g++ -o server.exe server_win.cpp -lws2_32
+
+[Use]
+>server.exe
+Server listening on port 8080...
+Client's message is: Client is sending greetings! --> [connect message to client]
+
+*/ 
 #include <iostream>
 #include <cstring>
 #include <winsock2.h>

